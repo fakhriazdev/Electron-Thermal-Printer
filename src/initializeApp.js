@@ -1,39 +1,85 @@
-import { app, BrowserWindow } from 'electron';
-import { setupSecurePOSPrinter } from 'electron-secure-pos-printer';
-import Electron from 'electron';
-import { fileURLToPath } from 'url';
-import { dirname, join } from 'path';
-import path from 'path';
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename); // You need this for resolving paths
+const { app, BrowserWindow, ipcMain } = require('electron');
+const path = require('path');
+const printer = require('printer'); // ✅ Gunakan printer untuk pencetakan thermal
 
 let mainWindow;
 
 function createWindow() {
   mainWindow = new BrowserWindow({
-    width: 800,
-    height: 600,
+    width: 490,
+    height: 625,
+    resizable: false,
+    maximizable: false,
     webPreferences: {
-      preload: path.join(__dirname, 'preload.js'),
+      contextIsolation: true,
+      nodeIntegration: false, // ✅ Keamanan lebih baik
+      preload: path.resolve(__dirname, 'preload.js'),
+      devTools: true,
     },
   });
 
-  mainWindow.loadFile(join(__dirname, 'pages', 'index.html'));
-  //mainWindow.webContents.openDevTools();
+  mainWindow.loadFile(path.resolve(__dirname, 'pages', 'index.html'));
+  mainWindow.webContents.openDevTools();
 }
 
-// Initialize the app
-export function initializeApp() {
-  app.whenReady().then(() => {
-    createWindow();
-    setupSecurePOSPrinter(Electron);
+async function initializeApp() {
+  await app.whenReady();
+  createWindow();
 
-    app.on('activate', () => {
-      if (BrowserWindow.getAllWindows().length === 0) {
-        createWindow();
-      }
-    });
+  // ✅ Handle mendapatkan daftar printer
+  ipcMain.handle('get-printers', async () => {
+    try {
+      const printers = printer.getPrinters();
+      return printers.map((p) => ({
+        name: p.name,
+        isDefault: p.isDefault,
+        status: p.status,
+      }));
+    } catch (error) {
+      console.error('Error fetching printers:', error);
+      return [];
+    }
+  });
+
+  // ✅ Handle pencetakan thermal printer
+  ipcMain.handle('print-test', async (_, printerName) => {
+    if (!printerName) {
+      return { success: false, message: 'Printer name is required' };
+    }
+
+    // Data struk dalam format ESC/POS
+    const testPrintData = `
+      Test Print - Node Printer\n
+      ------------------------------\n
+      Hello, this is a test print!\n
+      ------------------------------\n
+      Print Test Completed.\n
+    `;
+
+    try {
+      printer.printDirect({
+        printer: printerName,
+        text: testPrintData,
+        type: 'RAW', // ✅ ESC/POS format untuk thermal printer
+        success: (jobID) => {
+          console.log(`Print job sent successfully! Job ID: ${jobID}`);
+        },
+        error: (err) => {
+          console.error('Print error:', err);
+        },
+      });
+
+      return { success: true, message: 'Print job sent successfully!' };
+    } catch (error) {
+      console.error('Print error:', error);
+      return { success: false, message: error.message };
+    }
+  });
+
+  app.on('activate', () => {
+    if (BrowserWindow.getAllWindows().length === 0) {
+      createWindow();
+    }
   });
 
   app.on('window-all-closed', () => {
@@ -42,3 +88,5 @@ export function initializeApp() {
     }
   });
 }
+
+module.exports = { initializeApp };

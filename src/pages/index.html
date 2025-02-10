@@ -1,86 +1,33 @@
 <!DOCTYPE html>
-<html>
+<html lang="id">
 
 <head>
-    <title>Secure POS Printer Test</title>
-    <h1>GANTENG</h1>
-    <script>
-        // This global is exposed by Electron
-        /* global securePOSPrinter */
-
-        async function test() {
-            // Get a list of attached printers
-            var printers = await securePOSPrinter.getPrinters();
-
-            // Print some data
-
-            var data = [
-                {
-                    type: 'text',
-                    value: 'Testing 123',
-                },
-                {
-                    type: 'qrCode',
-                    value: 'https://www.saltlakefilmsociety.org/',
-                    options: {
-                        scale: 4,
-                    },
-                },
-                {
-                    type: 'barCode',
-                    value: 123456789999,
-                },
-                {
-                    // Path to image on file system
-                    // mimeType is required when loading images from the file system
-                    type: 'image',
-                    path: './assets/printer-image.png',
-                    mimeType: 'image/png',
-                },
-                {
-                    // You can also specify a "src" attribute directly
-                    type: 'image',
-                    src: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAgAAAAICAIAAABLbSncAAAACXBIWXMAAAsTAAALEwEAmpwYAAAAB3RJTUUH5gIREQQbbUH0CgAAAB1pVFh0Q29tbWVudAAAAAAAQ3JlYXRlZCB3aXRoIEdJTVBkLmUHAAAAMUlEQVQI13WOQQ4AIAzCWv//53kwmjiFYyGAAFBVbKmAjR7Ply6NK6Ufo7elqjye7k6T7hILeH2VsAAAAABJRU5ErkJggg==',
-                    sectionStyle: {
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                    },
-                    attributes: {
-                        width: '100px',
-                        height: '100px',
-                    },
-                },
-                {
-                    type: 'table',
-                    header: ['Item', 'Price'],
-                    rows: [
-                        ['Popcorn', '$5.00'],
-                        ['Soda', '$3.00'],
-                        ['Candy', '$2.00'],
-                    ],
-                    footer: ['Total', '$10.00'],
-                },
-            ];
-
-            var options = {
-                printerName: 'SomePrinterName',
-                // You can specify your own global stylesheet if you want
-                styleSheet: "body,#container { width: '110mm'}",
-                preview: true,
-            };
-
-            // Note: This promise will not resolve until
-            // 1) The preview window is shown, or
-            // 2) The document has been sent to the printer, or
-            // 3) An error occurred
-            await securePOSPrinter.print(data, options);
-        }
-
-        test();
-    </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="styles/main.css">
+    <title>Printer Selector</title>
 </head>
 
 <body>
+    <h1>Printer Selector</h1> <!-- Judul yang lebih deskriptif -->
+
+    <div class="container">
+        <div class="printer-select-container">
+            <label for="printerSelect">Pilih Printer:</label>
+            <select id="printerSelect">
+                <option value="" disabled selected>Loading...</option>
+            </select>
+        </div>
+
+        <div class="button-container">
+            <button id="refreshPrinters">🔄 Refresh</button>
+            <button id="testPrintButton">🖨 Test Print</button> <!-- Tambahkan ikon untuk visualisasi -->
+        </div>
+
+        <p id="status">🟡 Menunggu perintah...</p> <!-- Status default yang lebih informatif -->
+    </div>
+
+    <script src="renderer.js"></script>
 </body>
 
 </html>

@@ -1,3 +1,3 @@
-import { initializeApp } from './initializeApp.js';
+const { initializeApp } = require('./initializeApp');
 
 initializeApp();

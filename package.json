@@ -3,17 +3,17 @@
   "version": "1.0.0",
   "main": "src/main.js",
   "scripts": {
-    "start": "electron .",
+    "start": "electronmon .",
     "build": "electron-builder"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "type": "module",
+  "type": "commonjs",
   "description": "",
   "dependencies": {
     "electron": "^34.0.0",
-    "electron-secure-pos-printer": "^1.1.4"
+    "printer": "^0.4.0"
   },
   "devDependencies": {
     "electron-builder": "^25.1.8"

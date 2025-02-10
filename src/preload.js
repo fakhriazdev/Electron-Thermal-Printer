@@ -1,4 +1,6 @@
-import { contextBridge, ipcRenderer } from 'electron';
-import { setupSecureBridge } from 'electron-secure-pos-printer';
+const { contextBridge, ipcRenderer } = require('electron');
 
-setupSecureBridge(contextBridge, ipcRenderer);
+contextBridge.exposeInMainWorld('electronAPI', {
+  getPrinters: () => ipcRenderer.invoke('get-printers'),
+  printTest: (printerName) => ipcRenderer.invoke('print-test', printerName),
+});
