@@ -1,87 +1,41 @@
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
   const testPrintButton = document.getElementById('printTestBtn');
   const statusText = document.getElementById('status');
-  const printerInput = document.getElementById('printerInput');
-  const savePrinterButton = document.getElementById('savePrinter');
-  const logContainer = document.getElementById('logContainer'); // Pastikan ini ada di HTML
-  const printerDisplay = document.createElement('p');
+  const logContainer = document.getElementById('logContainer');
+  const printerSelect = document.getElementById('printerSelect');
 
-  if (
-    !testPrintButton ||
-    !statusText ||
-    !printerInput ||
-    !savePrinterButton ||
-    !logContainer
-  ) {
-    console.error(
-      '⚠️ Salah satu elemen tidak ditemukan. Periksa kembali HTML!'
-    );
-    return;
-  }
-
+  // Handler untuk menampilkan log
   if (window.electronAPI?.onLogMessage) {
     window.electronAPI.onLogMessage((message) => {
       const logItem = document.createElement('p');
       logItem.textContent = message;
       logContainer.appendChild(logItem);
+
+      // Auto-scroll ke bawah saat log baru ditambahkan
+      logContainer.scrollTop = logContainer.scrollHeight;
     });
   } else {
     console.warn('⚠️ window.electronAPI.onLogMessage tidak tersedia.');
   }
 
-  function updatePrinterUI(printerName = '') {
-    if (printerName) {
-      printerInput.type = 'hidden';
-      printerDisplay.innerHTML = `<strong>${printerName}</strong>`;
-      printerInput.insertAdjacentElement('afterend', printerDisplay);
-      savePrinterButton.textContent = 'Edit';
-    } else {
-      printerInput.type = 'text';
-      printerDisplay.remove();
-      savePrinterButton.textContent = 'Save';
-    }
-  }
-
-  function loadSavedPrinter() {
-    const savedPrinter = localStorage.getItem('selectedPrinter');
-    updatePrinterUI(savedPrinter);
-  }
-
-  savePrinterButton.addEventListener('click', () => {
-    if (savePrinterButton.textContent === 'Edit') {
-      printerInput.type = 'text';
-      printerInput.value = localStorage.getItem('selectedPrinter') || '';
-      printerDisplay.remove();
-      savePrinterButton.textContent = 'Save';
-    } else {
-      const printerName = printerInput.value.trim();
-      if (printerName) {
-        localStorage.setItem('selectedPrinter', printerName);
-        updatePrinterUI(printerName);
-      } else {
-        alert('⚠️ Masukkan nama printer terlebih dahulu!');
-      }
-    }
-  });
-
-  loadSavedPrinter();
-
   async function printTestReceipt() {
-    const selectedPrinter = localStorage.getItem('selectedPrinter');
-    if (!selectedPrinter) {
-      statusText.innerText = '⚠️ Harap masukkan nama printer terlebih dahulu!';
-      return;
-    }
-
     try {
       if (!window.electronAPI?.printReceipt) {
         throw new Error('⚠️ window.electronAPI.printReceipt tidak tersedia!');
       }
 
+      const selectedPrinter = await window.electronAPI.getSavedPrinter();
+      if (!selectedPrinter) {
+        statusText.innerText = '⚠️ Harap pilih printer terlebih dahulu!';
+        return;
+      }
+
+      await window.electronAPI.savePrinter(selectedPrinter);
+
       const response = await window.electronAPI.printReceipt(selectedPrinter);
       statusText.innerText = response?.success
         ? '✅ Print berhasil!'
-        : `${response?.message || 'Unknown error'}`;
+        : `⚠️ ${response?.message || 'Print gagal!'}`;
     } catch (error) {
       console.error('Print error:', error);
       statusText.innerText = `⚠️ Print gagal! Error: ${error.message}`;
@@ -89,24 +43,50 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   async function loadPrinters() {
-    const printers = await window.electronAPI.getPrinters();
-    const select = document.getElementById('printerSelect');
+    try {
+      if (
+        !window.electronAPI?.getPrinters ||
+        !window.electronAPI?.getSavedPrinter
+      ) {
+        throw new Error('⚠️ API Electron tidak tersedia.');
+      }
 
-    select.innerHTML = ''; // Kosongkan dulu dropdown
+      const printers = await window.electronAPI.getPrinters();
+      const savedPrinter = await window.electronAPI.getSavedPrinter();
 
-    if (printers.length === 0) {
-      select.innerHTML = "<option value=''>No printers found</option>";
-    } else {
+      printerSelect.innerHTML = ''; // Kosongkan dropdown sebelum diisi ulang
+
+      if (printers.length === 0) {
+        printerSelect.innerHTML = "<option value=''>No printers found</option>";
+        return;
+      }
+
       printers.forEach((printer) => {
         const option = document.createElement('option');
         option.value = printer.name;
         option.textContent = printer.name;
-        select.appendChild(option);
+        printerSelect.appendChild(option);
       });
+
+      // Jadikan printer yang tersimpan sebagai default
+      if (savedPrinter && printers.some((p) => p.name === savedPrinter)) {
+        printerSelect.value = savedPrinter;
+      } else {
+        statusText.innerText =
+          '⚠️ Printer tersimpan tidak ditemukan. Pilih ulang.';
+      }
+    } catch (error) {
+      console.error('Error loading printers:', error);
+      statusText.innerText = `⚠️ Gagal memuat daftar printer!`;
     }
   }
 
-  loadPrinters();
+  // Simpan printer yang dipilih ke `env.txt`
+  printerSelect.addEventListener('change', async () => {
+    const selectedPrinter = printerSelect.value;
+    await window.electronAPI.savePrinter(selectedPrinter);
+  });
 
+  await loadPrinters();
   testPrintButton.addEventListener('click', printTestReceipt);
 });

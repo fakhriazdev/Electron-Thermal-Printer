@@ -1,3 +1,17 @@
+/* Untuk WebKit-based (Chrome) */
+::-webkit-scrollbar {
+  display: none;
+  /* Lebar scrollbar */
+}
+::-webkit-scrollbar-thumb {
+  background: #888; /* Warna thumb */
+  border-radius: 5px;
+}
+
+::-webkit-scrollbar-track {
+  display: none;
+  background: transparent !important; /* Warna background track */
+}
 html,
 body {
   background-color: rgb(41, 42, 41) !important;
@@ -17,6 +31,25 @@ body {
 .info-container p {
   margin: 3px;
 }
+#printerSelect {
+  outline: none;
+  border: none;
+  background: transparent; /* Membuat background transparan */
+  color: white; /* Sesuaikan warna teks agar terlihat */
+  font-size: 14px;
+  appearance: none; /* Hilangkan default styling browser */
+}
+
+#printerSelect option {
+  background: rgb(25, 25, 25); /* Atur background opsi agar tetap terlihat */
+  color: white; /* Warna teks opsi */
+}
+
+#printerSelect:focus #printerSelect:active {
+  border: none; /* Atur ulang border */
+  outline: none; /* Hilangkan efek outline */
+}
+
 .info-container .logging {
   font-size: 11px;
   margin: 3px;

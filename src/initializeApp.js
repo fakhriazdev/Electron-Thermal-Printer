@@ -1,8 +1,9 @@
-const { app, BrowserWindow } = require('electron');
+const { app, BrowserWindow, Tray, Menu } = require('electron');
 const path = require('path');
 const WebSocket = require('ws');
 
 let mainWindow;
+let tray;
 const wss = new WebSocket.Server({ port: 8080 });
 
 app.setLoginItemSettings({
@@ -52,57 +53,84 @@ async function startWebSocketServer() {
   }, 30000);
 }
 
+function createTray() {
+  tray = new Tray(path.resolve(__dirname, 'assets/tray-icon.png'));
+  const contextMenu = Menu.buildFromTemplate([
+    { label: 'Show App', click: () => mainWindow.show() },
+    { label: 'Quit', click: () => app.quit() },
+  ]);
+  tray.setToolTip('Electron App');
+  tray.setContextMenu(contextMenu);
+  tray.on('click', () => mainWindow.show());
+}
+
 function createWindow() {
-  mainWindow = new BrowserWindow({
-    width: 490,
-    height: 625,
-    resizable: false,
-    maximizable: false,
-    webPreferences: {
-      contextIsolation: true,
-      nodeIntegration: false,
-      preload: path.resolve(__dirname, 'preload.js'),
-      devTools: true,
-    },
-  });
+  try {
+    mainWindow = new BrowserWindow({
+      width: 490,
+      height: 625,
+      resizable: false,
+      maximizable: false,
+      webPreferences: {
+        contextIsolation: true,
+        nodeIntegration: false,
+        preload: path.resolve(__dirname, 'preload.js'),
+        devTools: true,
+      },
+    });
 
-  mainWindow.loadFile(path.resolve(__dirname, 'pages', 'index.html'));
+    mainWindow.loadFile(path.resolve(__dirname, 'pages', 'index.html'));
 
-  //mainWindow.webContents.openDevTools();
+    mainWindow.on('close', (event) => {
+      event.preventDefault();
+      mainWindow.hide();
+    });
+  } catch (error) {
+    console.error('❌ Error creating window:', error);
+  }
 }
 
 async function initializeApp() {
-  await app.whenReady();
-  createWindow();
-  startWebSocketServer();
+  try {
+    await app.whenReady();
+    createWindow();
+    createTray();
+    startWebSocketServer();
 
-  app.on('activate', () => {
-    if (BrowserWindow.getAllWindows().length === 0) {
-      createWindow();
-    }
-  });
-
-  app.on('window-all-closed', () => {
-    if (process.platform !== 'darwin') {
-      app.quit();
-    }
-  });
+    app.on('activate', () => {
+      if (BrowserWindow.getAllWindows().length === 0) {
+        createWindow();
+      }
+    });
+  } catch (error) {
+    console.error('❌ Error initializing application:', error);
+  }
 }
 
 function sendLogMessage(message, success) {
-  const windows = BrowserWindow.getAllWindows();
-  if (windows.length > 0) {
-    windows.forEach((win) => win.webContents.send('log-message', message));
+  try {
+    const windows = BrowserWindow.getAllWindows();
+    if (windows.length > 0) {
+      windows.forEach((win) => win.webContents.send('log-message', message));
+    }
+    return { success, message };
+  } catch (error) {
+    console.error('❌ Error sending log message:', error);
+    return { success: false, message: 'Error sending log message' };
   }
-  return { success, message };
 }
 
-async function getPrinters() {
-  const window = BrowserWindow.getAllWindows()[0];
-  if (!window) return [];
+function getPrinters() {
+  try {
+    const window = BrowserWindow.getAllWindows()[0];
+    if (!window) return [];
 
-  const printers = await window.webContents.getPrintersAsync();
-  return printers;
+    const printers = window.webContents.getPrinters();
+    return printers;
+  } catch (error) {
+    console.error('❌ Error getting printers:', error);
+    return [];
+  }
 }
 
 module.exports = { initializeApp, sendLogMessage, getPrinters };
