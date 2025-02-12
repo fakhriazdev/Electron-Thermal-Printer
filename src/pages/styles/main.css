@@ -6,3 +6,93 @@ body {
   height: 100%;
   color: white !important;
 }
+
+.container {
+  width: 100%;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 0px;
+}
+.info-container p {
+  margin: 3px;
+}
+.info-container .logging {
+  font-size: 11px;
+  margin: 3px;
+}
+.info-container input {
+  font-size: 0.8rem;
+  margin: 1px;
+}
+
+.printer-select-container {
+  background-color: rgba(109, 109, 109, 0.177);
+  border-radius: 6px;
+  padding: 10px;
+  border: 0.5px solid rgb(149, 149, 149);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+}
+
+.printer-select-container .container {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.icon {
+  font-size: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.actions {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.actions button {
+  background-color: rgba(255, 255, 255, 0.302);
+  border-radius: 5px;
+  width: 60px;
+  height: 20px;
+  font-size: 11px;
+  color: white;
+  border: 0px;
+}
+
+.actions button:hover {
+  background-color: rgba(255, 255, 255, 0.386);
+  border-radius: 5px;
+  width: 60px;
+  height: 20px;
+  font-size: 11px;
+  color: white;
+  border: 0px;
+}
+
+.title-logging {
+  font-size: 12px;
+  margin-bottom: 0.5px;
+}
+.log-container {
+  border-radius: 5px;
+  margin-top: 10px;
+  min-height: 100px;
+  max-height: 100px;
+  overflow-y: auto;
+  border: 0.5px solid rgb(149, 149, 149);
+  background-color: rgb(25, 25, 25);
+  color: whitesmoke;
+  padding: 5px;
+}
+.log-container p {
+  margin-bottom: 0.5px;
+  margin-top: 0.5px;
+  font-size: 11px;
+}

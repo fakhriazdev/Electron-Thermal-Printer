@@ -5,27 +5,39 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="styles/main.css">
-    <title>Printer Selector</title>
+    <title>..::AMSTOOL::..</title>
 </head>
 
 <body>
-    <h1>Printer Selector</h1> <!-- Judul yang lebih deskriptif -->
+    <h1>General Settings</h1>
 
     <div class="container">
         <div class="printer-select-container">
-            <label for="printerSelect">Pilih Printer:</label>
-            <select id="printerSelect">
-                <option value="" disabled selected>Loading...</option>
-            </select>
-        </div>
 
-        <div class="button-container">
-            <button id="refreshPrinters">🔄 Refresh</button>
-            <button id="testPrintButton">🖨 Test Print</button> <!-- Tambahkan ikon untuk visualisasi -->
-        </div>
+            <div class="container">
+                <div class="icon">🖨</div>
+                <div class="info-container">
+                    <input type="text" id="printerInput" placeholder="Masukkan nama printer..." />
+                    <select id="printerSelect">
+                        <option value="">Loading printers...</option>
+                    </select>
+                    <p class="logging" id="status">🔴 No Connection</p>
+                </div>
+            </div>
 
-        <p id="status">🟡 Menunggu perintah...</p> <!-- Status default yang lebih informatif -->
+            <div class="actions">
+                <button id="savePrinter">Simpan</button>
+                <button id="printTestBtn">Test Print</button>
+            </div>
+
+        </div>
+        <!-- <p id="selectedPrinter">Printer tersimpan: -</p> -->
+
     </div>
+    <p class="title-logging">Log</p>
+    <div id="logContainer" class="log-container"></div>
+
+
 
     <script src="renderer.js"></script>
 </body>

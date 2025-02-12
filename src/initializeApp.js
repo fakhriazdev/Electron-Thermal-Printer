@@ -1,8 +1,56 @@
-const { app, BrowserWindow, ipcMain } = require('electron');
+const { app, BrowserWindow } = require('electron');
 const path = require('path');
-const printer = require('printer'); // ✅ Gunakan printer untuk pencetakan thermal
+const WebSocket = require('ws');
 
 let mainWindow;
+const wss = new WebSocket.Server({ port: 8080 });
+
+app.setLoginItemSettings({
+  openAtLogin: true,
+  path: app.getPath('exe'),
+});
+
+async function startWebSocketServer() {
+  wss.on('connection', (ws) => {
+    ws.isAlive = true;
+
+    ws.on('pong', () => {
+      ws.isAlive = true;
+    });
+
+    sendLogMessage('✅ Client connected to WebSocket', true);
+
+    ws.on('message', (message) => {
+      console.log('📩 Received:', message);
+
+      if (message === 'PRINT') {
+        sendLogMessage('🖨 Print command received', true);
+      }
+    });
+
+    ws.on('close', () => {
+      sendLogMessage('❌ Client disconnected', false);
+    });
+
+    ws.on('error', (error) => {
+      console.error('❌ WebSocket Error:', error);
+      sendLogMessage('❌ WebSocket Error: ' + error.message, false);
+      ws.terminate();
+    });
+  });
+
+  setInterval(() => {
+    wss.clients.forEach((ws) => {
+      if (!ws.isAlive) {
+        console.warn('⚠️ Terminating inactive client connection...');
+        ws.terminate();
+        return;
+      }
+      ws.isAlive = false;
+      ws.ping(); // Kirim "ping" untuk memastikan client masih aktif
+    });
+  }, 30000);
+}
 
 function createWindow() {
   mainWindow = new BrowserWindow({
@@ -12,69 +60,21 @@ function createWindow() {
     maximizable: false,
     webPreferences: {
       contextIsolation: true,
-      nodeIntegration: false, // ✅ Keamanan lebih baik
+      nodeIntegration: false,
       preload: path.resolve(__dirname, 'preload.js'),
       devTools: true,
     },
   });
 
   mainWindow.loadFile(path.resolve(__dirname, 'pages', 'index.html'));
-  mainWindow.webContents.openDevTools();
+
+  //mainWindow.webContents.openDevTools();
 }
 
 async function initializeApp() {
   await app.whenReady();
   createWindow();
-
-  // ✅ Handle mendapatkan daftar printer
-  ipcMain.handle('get-printers', async () => {
-    try {
-      const printers = printer.getPrinters();
-      return printers.map((p) => ({
-        name: p.name,
-        isDefault: p.isDefault,
-        status: p.status,
-      }));
-    } catch (error) {
-      console.error('Error fetching printers:', error);
-      return [];
-    }
-  });
-
-  // ✅ Handle pencetakan thermal printer
-  ipcMain.handle('print-test', async (_, printerName) => {
-    if (!printerName) {
-      return { success: false, message: 'Printer name is required' };
-    }
-
-    // Data struk dalam format ESC/POS
-    const testPrintData = `
-      Test Print - Node Printer\n
-      ------------------------------\n
-      Hello, this is a test print!\n
-      ------------------------------\n
-      Print Test Completed.\n
-    `;
-
-    try {
-      printer.printDirect({
-        printer: printerName,
-        text: testPrintData,
-        type: 'RAW', // ✅ ESC/POS format untuk thermal printer
-        success: (jobID) => {
-          console.log(`Print job sent successfully! Job ID: ${jobID}`);
-        },
-        error: (err) => {
-          console.error('Print error:', err);
-        },
-      });
-
-      return { success: true, message: 'Print job sent successfully!' };
-    } catch (error) {
-      console.error('Print error:', error);
-      return { success: false, message: error.message };
-    }
-  });
+  startWebSocketServer();
 
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) {
@@ -89,4 +89,20 @@ async function initializeApp() {
   });
 }
 
-module.exports = { initializeApp };
+function sendLogMessage(message, success) {
+  const windows = BrowserWindow.getAllWindows();
+  if (windows.length > 0) {
+    windows.forEach((win) => win.webContents.send('log-message', message));
+  }
+  return { success, message };
+}
+
+async function getPrinters() {
+  const window = BrowserWindow.getAllWindows()[0];
+  if (!window) return [];
+
+  const printers = await window.webContents.getPrintersAsync();
+  return printers;
+}
+
+module.exports = { initializeApp, sendLogMessage, getPrinters };
