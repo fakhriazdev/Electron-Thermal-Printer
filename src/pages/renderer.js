@@ -1,5 +1,7 @@
 document.addEventListener('DOMContentLoaded', async () => {
   const testPrintButton = document.getElementById('printTestBtn');
+  const testCashDrawer = document.getElementById('testCashDrawer');
+
   const statusText = document.getElementById('status');
   const logContainer = document.getElementById('logContainer');
   const printerSelect = document.getElementById('printerSelect');
@@ -18,6 +20,26 @@ document.addEventListener('DOMContentLoaded', async () => {
     console.warn('⚠️ window.electronAPI.onLogMessage tidak tersedia.');
   }
 
+  // Action button TestCashDrawer
+  async function testCashDrawerHandler() {
+    try {
+      if (!window.electronAPI?.openCashDrawer) {
+        throw new Error('⚠️ window.electronAPI.openCashDrawer tidak tersedia!');
+      }
+
+      const response = await window.electronAPI.openCashDrawer();
+      logMessage(
+        response?.success
+          ? '✅ Cash Drawer terbuka!'
+          : `⚠️ ${response?.message || 'Gagal membuka Cash Drawer!'}`,
+        response?.success
+      );
+    } catch (error) {
+      console.error('CashDrawer error:', error);
+      logMessage(`⚠️ Cash Drawer gagal! Error: ${error.message}`);
+    }
+  }
+  //action button PrintTestReceiot
   async function printTestReceipt() {
     try {
       if (!window.electronAPI?.printReceipt) {
@@ -88,5 +110,6 @@ document.addEventListener('DOMContentLoaded', async () => {
   });
 
   await loadPrinters();
+  testCashDrawer.addEventListener('click', testCashDrawerHandler);
   testPrintButton.addEventListener('click', printTestReceipt);
 });

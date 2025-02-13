@@ -10,6 +10,15 @@ contextBridge.exposeInMainWorld('electronAPI', {
     });
   },
 
+  openCashDrawer: async () => {
+    try {
+      return await ipcRenderer.invoke('openCD');
+    } catch (error) {
+      console.error('❌ Error opening cash drawer:', error);
+      return { success: false, message: error.message };
+    }
+  },
+
   // Kirim perintah cetak ke main process
   printReceipt: async (printerName) => {
     try {

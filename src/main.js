@@ -5,6 +5,10 @@ const {
 } = require('./initializeApp');
 const { app, ipcMain, webContents } = require('electron');
 const { PosPrinter } = require('@plick/electron-pos-printer');
+const {
+  openCashDrawer,
+  getAvailablePrinters,
+} = require('@achyutlabsau/cashdrawer');
 const fs = require('fs');
 const path = require('path');
 
@@ -13,8 +17,8 @@ const data = [
     type: 'image',
     path: path.resolve(__dirname, 'assets/logo.jpeg'), // Can be a URL or change the key to "path" if you want to use a local file on disk
     position: 'left', // position of image: 'left' | 'center' | 'right'
-    width: '60px', // width of image in px; default: auto
-    height: '40px', // width of image in px; default: 50 or '50px'
+    width: '85px', // width of image in px; default: auto
+    height: '34px', // width of image in px; default: 50 or '50px'
   },
   {
     type: 'text', // 'text' | 'barCode' | 'qrCode' | 'image' | 'table' | 'divider'
@@ -37,7 +41,7 @@ ipcMain.handle('print-test', async () => {
     preview: false,
     silent: true,
     printerName: 'CITIZEN CT-D150',
-    margin: '0 1 0 1',
+    margin: '0 0 1 1',
     copies: 1,
     timeOutPerLine: 400,
     pageSize: '80mm',
@@ -45,10 +49,25 @@ ipcMain.handle('print-test', async () => {
 
   try {
     await PosPrinter.print(data, options);
-    return sendLogMessage('✅ Print job sent successfully!', true);
+    sendLogMessage('✅ Print job sent successfully!', true);
+    openCashDrawer('CITIZEN CT-D150');
+    return sendLogMessage('✅ Cash drawer opened', true);
   } catch (error) {
     console.error('Print error:', error);
     return sendLogMessage(`⚠️ Print error: ${error.message}`, false);
+  }
+});
+
+ipcMain.handle('openCD', async () => {
+  console.log('SAMPAI');
+  try {
+    await openCashDrawer('CITIZEN CT-D150'); // Pastikan ini mendukung async/await jika perlu
+    sendLogMessage('✅ Cash drawer opened', true);
+    return { success: true, message: '✅ Cash drawer opened successfully' };
+  } catch (error) {
+    console.error('❌ CashDrawer error:', error);
+    sendLogMessage(`⚠️ CashDrawer error: ${error.message}`, false);
+    return { success: false, message: `⚠️ ${error.message}` };
   }
 });
 
