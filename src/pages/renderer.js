@@ -1,11 +1,24 @@
 document.addEventListener('DOMContentLoaded', async () => {
   const testPrintButton = document.getElementById('printTestBtn');
   const testCashDrawer = document.getElementById('testCashDrawer');
-
+  const clientListContainer = document.getElementById('client-list');
   const statusText = document.getElementById('status');
   const logContainer = document.getElementById('logContainer');
   const printerSelect = document.getElementById('printerSelect');
+  
+  //client list
+ window.electronAPI.onUpdateClientList((clients) => {
+    clientListContainer.innerHTML = ''; // Kosongkan sebelum update
 
+    clients.forEach(client => {
+        const listItem = document.createElement('li');
+        listItem.innerHTML = `
+            <strong>${client.id}</strong> - ${client.ip} <br>
+            🌐 Browser: ${client.browser} | 🖥 Platform: ${client.platform} | 🏳 Language: ${client.language}
+        `;
+        clientListContainer.appendChild(listItem);
+    });
+});
   // Handler untuk menampilkan log
   if (window.electronAPI?.onLogMessage) {
     window.electronAPI.onLogMessage((message) => {

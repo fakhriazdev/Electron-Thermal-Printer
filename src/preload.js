@@ -1,6 +1,8 @@
 const { contextBridge, ipcRenderer } = require('electron');
 
 contextBridge.exposeInMainWorld('electronAPI', {
+  onUpdateClientList: (callback) => ipcRenderer.on('update-client-list', (event, clients) => callback(clients)),
+  
   // Menerima log dari main process dan meneruskannya ke renderer
   onLogMessage: (callback) => {
     ipcRenderer.removeAllListeners('log-message');

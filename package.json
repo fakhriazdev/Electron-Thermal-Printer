@@ -17,6 +17,7 @@
     "electron": "^15.5.7",
     "electronmon": "2.0.3",
     "fs": "0.0.1-security",
+    "os": "^0.1.2",
     "ws": "8.18.0"
   },
   "devDependencies": {

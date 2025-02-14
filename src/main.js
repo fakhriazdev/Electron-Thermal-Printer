@@ -1,14 +1,10 @@
 const {
   initializeApp,
   sendLogMessage,
-  getPrinters,
+  openCashDrawer
 } = require('./initializeApp');
-const { app, ipcMain, webContents } = require('electron');
+const { app, ipcMain } = require('electron');
 const { PosPrinter } = require('@plick/electron-pos-printer');
-const {
-  openCashDrawer,
-  getAvailablePrinters,
-} = require('@achyutlabsau/cashdrawer');
 const fs = require('fs');
 const path = require('path');
 
@@ -33,6 +29,7 @@ const data = [
 const envFilePath = path.join(app.getPath('userData'), 'env.txt');
 
 initializeApp();
+
 ipcMain.handle('print-test', async () => {
   const printerName = await fs.promises.readFile(envFilePath, 'utf-8');
   console.log(`Using printer: ${printerName}`);
@@ -59,7 +56,6 @@ ipcMain.handle('print-test', async () => {
 });
 
 ipcMain.handle('openCD', async () => {
-  console.log('SAMPAI');
   try {
     await openCashDrawer('CITIZEN CT-D150'); // Pastikan ini mendukung async/await jika perlu
     sendLogMessage('✅ Cash drawer opened', true);
@@ -96,10 +92,3 @@ ipcMain.handle('get-printers', async (event) => {
   return event.sender.getPrinters();
 });
 
-// function sendLogMessage(message, success) {
-//   const windows = BrowserWindow.getAllWindows();
-//   if (windows.length > 0) {
-//     windows.forEach((win) => win.webContents.send('log-message', message));
-//   }
-//   return { success, message };
-// }
